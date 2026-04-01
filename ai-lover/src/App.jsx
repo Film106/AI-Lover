@@ -74,8 +74,7 @@ async function getAIReply(userMessage, conversationHistory, gender, mode) {
     body: JSON.stringify({
       model: MODEL,
       messages: messages,
-      temperature: 0.8,
-      response_format: { type: "json_object" }
+      temperature: 0.8
     }),
   });
 
@@ -122,6 +121,10 @@ async function speakWithElevenLabs(text, gender) {
         text: text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
+          stability: 0.8,
+          similarity_boost: 0.8,
+          style: 0.0,
+          use_speaker_boost: true
           stability: 0.8,
           similarity_boost: 0.8,
           style: 0.0,
@@ -192,9 +195,14 @@ async function speakText(text, gender) {
   window.speechSynthesis.cancel();
 
   // Try ElevenLabs first if enabled and configured
-  if (import.meta.env.VITE_USE_ELEVENLABS === 'true' || import.meta.env.VITE_ELEVENLABS_API_KEY) {
+  const enablePremium = import.meta.env.VITE_USE_ELEVENLABS === 'true' && import.meta.env.VITE_ELEVENLABS_API_KEY;
+  if (enablePremium) {
+    console.log("Using ElevenLabs TTS...");
     const success = await speakWithElevenLabs(text, gender);
     if (success) return;
+    console.warn("ElevenLabs failed, falling back to browser TTS");
+  } else {
+    console.log("Using Browser TTS (Free)");
   }
 
   // Fallback to browser TTS
