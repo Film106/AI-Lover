@@ -125,10 +125,6 @@ async function speakWithElevenLabs(text, gender) {
           similarity_boost: 0.8,
           style: 0.0,
           use_speaker_boost: true
-          stability: 0.8,
-          similarity_boost: 0.8,
-          style: 0.0,
-          use_speaker_boost: true
         }
       })
     });
