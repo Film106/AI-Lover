@@ -124,9 +124,9 @@ async function speakWithElevenLabs(text, gender) {
           stability: 0.8,
           similarity_boost: 0.8,
           style: 0.0,
-          use_speaker_boost: true
-        }
-      })
+          use_speaker_boost: true,
+        },
+      }),
     });
 
     if (!response.ok) throw new Error("ElevenLabs API Error");
