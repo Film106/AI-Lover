@@ -388,7 +388,7 @@ function LandingScreen({ onStart }) {
           </p>
 
           <p className="text-white/80 font-bold mb-5 text-base sm:text-lg uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] relative z-10">
-            อยากจีบใครเลือกเอาน้องบ่าวหรือน้องสาว?
+            อยากจีบใครเลือกเอาน้องบ่าวหรือน้องสาว...?
           </p>
 
           {/* 3D Buttons Area */}
