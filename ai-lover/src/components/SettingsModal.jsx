@@ -40,17 +40,18 @@ export default function SettingsModal({ isOpen, onClose, onSave, currentSettings
     setTesting(true)
     setTestResult(null)
     try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://openrouter.ai/api/v1/chat/completions';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey.trim()}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'AI จีบเพื่อน'
+          'X-Title': 'AI Lover'
         },
         body: JSON.stringify({
           model: chatModel,
-          messages: [{ role: 'user', content: 'Say "ok" in Thai.' }],
+          messages: [{ role: 'user', content: 'Say "ok".' }],
           max_tokens: 20
         })
       })

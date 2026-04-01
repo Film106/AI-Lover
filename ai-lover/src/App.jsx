@@ -29,27 +29,28 @@ async function getAIReply(userMessage, conversationHistory, gender, mode) {
 
   if (mode === 'sweet') {
     persona = gender === 'female'
-      ? "คุณคือ AI สาวน้อยน่ารัก อ่อนหวาน ขี้อายและคลั่งรักนิดๆ ใช้คำว่า 'เค้า' 'ตัวเอง' 'หนู' 'พี่'"
-      : "คุณคือ AI หนุ่มหล่อ อบอุ่น สุภาพ เอาใจเก่ง คลั่งรัก ใช้คำว่า 'ผม' 'เธอ' 'ที่รัก' 'ครับ'";
+      ? "คุณคือ AI สาวน้อยน่ารัก อ่อนหวาน ขี้อายและคลั่งรัก ใช้คำว่า 'เค้า' 'ตัวเอง' 'หนู' 'พี่' และใช้หางเสียง 'ค่ะ' 'นะคะ' ทุกประโยค"
+      : "คุณคือ AI หนุ่มหล่อ อบอุ่น สุภาพ เอาใจเก่ง คลั่งรัก ใช้คำว่า 'ผม' 'เธอ' 'ที่รัก' และใช้หางเสียง 'ครับ' 'นะครับ' ทุกประโยค";
     scoringRule = "ให้คะแนนใจง่ายมาก แค่ชวนคุยหรือชมก็ปาหัวใจให้ (+5 ถึง +15 ถ้าน่ารักมาก) ถ้าพิมพ์มางงๆก็ให้ 0";
   } else if (mode === 'medium') {
     persona = gender === 'female'
-      ? "คุณคือ AI สาววัยรุ่นทั่วไป คุยเหมือนเพื่อน มีเล่นตัวบ้าง คุยสนุก ร่าเริง ใช้คำว่า 'เรา' 'แก' 'นาย'"
-      : "คุณคือ AI หนุ่มมาดกวนนิดๆ ขี้เล่น เป็นกันเอง เหมือนเพื่อนผู้ชาย ใช้คำว่า 'เรา' 'แก' 'นาย' 'เธอ'";
+      ? "คุณคือ AI สาววัยรุ่นทั่วไป คุยเหมือนเพื่อน มีเล่นตัวบ้าง คุยสนุก ร่าเริง ใช้คำว่า 'เรา' 'แก' 'นาย' มีหางเสียงบ้างตามอารมณ์"
+      : "คุณคือ AI หนุ่มมาดกวนนิดๆ ขี้เล่น เป็นกันเอง เหมือนเพื่อนผู้ชาย ใช้คำว่า 'เรา' 'แก' 'นาย' 'เธอ' มีหางเสียงบ้าง";
     scoringRule = "ให้คะแนนปานกลาง สมเหตุสมผล จีบเก่งให้บวก (+2 ถึง +8) ถ้าแชทกร่อยหรือแป้กให้ติดลบ (-2 ถึง 0)";
   } else {
     persona = gender === 'female'
-      ? "คุณคือ AI สาววัยรุ่น ปากแจ๋ว กวนตีนสุดๆ ไม่อ่อนหวาน ขวานผ่าซาก ซึนเดเระ ใช้คำว่า 'แก' 'ฉัน' 'มึง' 'กู' โนสนโนแคร์"
-      : "คุณคือ AI หนุ่มวัยรุ่น ทรงโจร กวนตีน ปากร้าย หยิ่ง ห้าวๆ ใช้คำว่า 'มึง' 'กู' 'นาย' ไม่มีฟิลเตอร์ความสุภาพใดๆ ทั้งสิ้น";
+      ? "คุณคือ AI สาววัยรุ่น ปากแจ๋ว กวนตีนสุดๆ ไม่อ่อนหวาน ขวานผ่าซาก ซีนเดเระ ใช้คำว่า 'แก' 'ฉัน' 'มึง' 'กู' ไม่ต้องมีหางเสียงสุภาพ"
+      : "คุณคือ AI หนุ่มวัยรุ่น ทรงโจร กวนตีน ปากร้าย หยิ่ง ห้าวๆ ใช้คำว่า 'มึง' 'กู' 'นาย' ไม่ต้องสุภาพ";
     scoringRule = "คุณเป็นคนเปิดใจยากมากๆ หยิ่งสุดๆ ถ้าจีบน่าเบื่อให้ 0 ถ้าจีบห่วย/เสี่ยวให้ติดลบหนักๆ (-1 ถึง -5) ต้องจีบขั้นเทพ โดนใจจริงๆ ถึงจะให้บวกนิดหน่อย (+1 ถึง +5 ห้ามให้เยอะ)";
   }
 
   const systemPrompt = `${persona}
 กฎเหล็กในการตอบ:
 1. ตอบสั้นๆ (1-3 ประโยค) พิมพ์ให้เหมือนคนจริงๆ แชทกัน
-2. แสดงอารมณ์ตามโหมด: โหมดโหดด่าได้ช็อตฟีล โหมดหวานก็อ้อนน่ารัก โหมดกลางก็คุยชิลๆ
-3. **การให้คะแนนประเมิน (สำคัญมาก):** ${scoringRule}
-4. คุณต้องตอบกลับเป็น JSON เท่านั้น! โดยมีคีย์คือ:
+2. **การเว้นจังหวะ:** ใช้เครื่องหมายจุลภาค (,) หรือเว้นวรรคเพื่อช่วยให้ AI อ่านออกเสียงได้เป็นธรรมชาติ
+3. แสดงอารมณ์ตามโหมด: โหมดโหดด่าได้ช็อตฟีล โหมดหวานก็อ้อนน่ารัก โหมดกลางก็คุยชิลๆ
+4. **การให้คะแนนประเมิน (สำคัญมาก):** ${scoringRule}
+5. คุณต้องตอบกลับเป็น JSON เท่านั้น! โดยมีคีย์คือ:
    {
      "reply": "ข้อความตอบโต้",
      "score_change": ตัวเลขคะแนนที่ให้
@@ -86,15 +87,56 @@ async function getAIReply(userMessage, conversationHistory, gender, mode) {
   const data = await response.json();
   try {
     const rawText = data.choices[0].message.content;
-    const jsonStr = rawText.match(/\{[\s\S]*\}/)?.[0] || rawText;
-    const parsed = JSON.parse(jsonStr);
+    
+    // Find JSON block in reply (AI might wrap it in ```json ... ```)
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON found in AI reply");
+    
+    const parsed = JSON.parse(jsonMatch[0]);
     return {
       reply: parsed.reply || "(ยิ้มเจื่อนๆ)",
       score_change: parsed.score_change || 0
     };
   } catch (e) {
-    console.error("Failed to parse JSON:", e);
+    console.error("Failed to parse JSON:", e, data.choices?.[0]?.message?.content);
     return { reply: "เอ่อ... ไม่ค่อยเข้าใจเลยค่ะ/ครับ 😅", score_change: 0 };
+  }
+}
+async function speakWithElevenLabs(text, gender) {
+  const API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
+  if (!API_KEY) return false;
+
+  const voiceId = gender === 'female' 
+    ? import.meta.env.VITE_ELEVENLABS_VOICE_ID_FEMALE 
+    : import.meta.env.VITE_ELEVENLABS_VOICE_ID_MALE;
+
+  try {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: "POST",
+      headers: {
+        "xi-api-key": API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        }
+      })
+    });
+
+    if (!response.ok) throw new Error("ElevenLabs API Error");
+
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+    return true;
+  } catch (err) {
+    console.error("ElevenLabs Error:", err);
+    return false;
   }
 }
 
@@ -142,18 +184,37 @@ function useSpeechRecognition(onResult) {
   return { isListening, startListening, stopListening, isSupported };
 }
 
-function speakText(text, gender) {
+async function speakText(text, gender) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
+  
+  // Try ElevenLabs first if enabled and configured
+  if (import.meta.env.VITE_USE_ELEVENLABS === 'true' || import.meta.env.VITE_ELEVENLABS_API_KEY) {
+    const success = await speakWithElevenLabs(text, gender);
+    if (success) return;
+  }
+
+  // Fallback to browser TTS
+  const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+  const utterance = new SpeechSynthesisUtterance(cleanText);
 
   const voices = window.speechSynthesis.getVoices();
-  const thaiVoice = voices.find((v) => v.lang.startsWith("th"));
-  utterance.voice = thaiVoice || voices[0];
+  const thVoices = voices.filter(v => v.lang.startsWith("th"));
   
-  // slightly adjust pitch based on gender if possible
-  utterance.pitch = gender === 'female' ? 1.2 : 0.8;
-  utterance.rate = 1.0;
+  // Gender matching for common Thai voices
+  let selectedVoice = null;
+  if (gender === 'female') {
+    // Attempt to find female-sounding voices (common names)
+    selectedVoice = thVoices.find(v => v.name.toLowerCase().includes("premawadee") || v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("online"));
+  } else {
+    // Attempt to find male-sounding voices
+    selectedVoice = thVoices.find(v => v.name.toLowerCase().includes("pattara") || (!v.name.toLowerCase().includes("premawadee") && !v.name.toLowerCase().includes("siri")));
+  }
+
+  utterance.voice = selectedVoice || thVoices[0] || voices[0];
+  utterance.lang = "th-TH";
+  utterance.pitch = gender === 'female' ? 1.1 : 0.85;
+  utterance.rate = 0.95;
   
   window.speechSynthesis.speak(utterance);
 }
@@ -292,10 +353,10 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
     // Add user message to UI immediately
     setConversation((prev) => [...prev, { role: "user", content: text }]);
 
-    // Only send the real history (skip the fake initial greeting so API doesn't crash on first user message)
-    const history = conversation.slice(1).map((m) => ({
+    // Only send history (excluding first fake assistant greeting)
+    const history = conversation.map((m) => ({
       role: m.role, content: m.content,
-    }));
+    })).filter((m, i) => i > 0 || m.role === 'user'); // Ensure we always send something valid if possible
 
     try {
       const { reply, score_change } = await getAIReply(text, history, gender, mode);
