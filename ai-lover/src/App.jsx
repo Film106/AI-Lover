@@ -74,8 +74,7 @@ async function getAIReply(userMessage, conversationHistory, gender, mode) {
     body: JSON.stringify({
       model: MODEL,
       messages: messages,
-      temperature: 0.8,
-      response_format: { type: "json_object" }
+      temperature: 0.8
     }),
   });
 
@@ -121,8 +120,10 @@ async function speakWithElevenLabs(text, gender) {
         text: text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
+          stability: 0.8,
+          similarity_boost: 0.8,
+          style: 0.0,
+          use_speaker_boost: true
         }
       })
     });
@@ -189,9 +190,14 @@ async function speakText(text, gender) {
   window.speechSynthesis.cancel();
   
   // Try ElevenLabs first if enabled and configured
-  if (import.meta.env.VITE_USE_ELEVENLABS === 'true' || import.meta.env.VITE_ELEVENLABS_API_KEY) {
+  const enablePremium = import.meta.env.VITE_USE_ELEVENLABS === 'true' && import.meta.env.VITE_ELEVENLABS_API_KEY;
+  if (enablePremium) {
+    console.log("Using ElevenLabs TTS...");
     const success = await speakWithElevenLabs(text, gender);
     if (success) return;
+    console.warn("ElevenLabs failed, falling back to browser TTS");
+  } else {
+    console.log("Using Browser TTS (Free)");
   }
 
   // Fallback to browser TTS
@@ -205,10 +211,20 @@ async function speakText(text, gender) {
   let selectedVoice = null;
   if (gender === 'female') {
     // Attempt to find female-sounding voices (common names)
-    selectedVoice = thVoices.find(v => v.name.toLowerCase().includes("premawadee") || v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("online"));
+    selectedVoice = thVoices.find(v => 
+      v.name.toLowerCase().includes("premawadee") || 
+      v.name.toLowerCase().includes("narisa") || 
+      v.name.toLowerCase().includes("kanokwan") ||
+      v.name.toLowerCase().includes("online") ||
+      v.name.toLowerCase().includes("google")
+    );
   } else {
     // Attempt to find male-sounding voices
-    selectedVoice = thVoices.find(v => v.name.toLowerCase().includes("pattara") || (!v.name.toLowerCase().includes("premawadee") && !v.name.toLowerCase().includes("siri")));
+    selectedVoice = thVoices.find(v => 
+      v.name.toLowerCase().includes("pattara") || 
+      v.name.toLowerCase().includes("sakda") || 
+      (!v.name.toLowerCase().includes("premawadee") && !v.name.toLowerCase().includes("narisa") && !v.name.toLowerCase().includes("siri"))
+    );
   }
 
   utterance.voice = selectedVoice || thVoices[0] || voices[0];
@@ -401,10 +417,21 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
         
         {/* Header Info Bar */}
         <div className="flex-shrink-0 flex items-center justify-between mb-4 bg-white/5 p-3 rounded-2xl border border-white/10 backdrop-blur-md shadow-lg z-10 w-full">
-          {/* Timer */}
-          <div className="flex items-center gap-2 text-white/80 font-mono text-sm">
-            <Clock size={16} className="text-cyan-400" />
-            <span>{formatTime(seconds)}</span>
+          {/* Timer & Voice Status */}
+          <div className="flex flex-col gap-1 items-start">
+            <div className="flex items-center gap-2 text-white/80 font-mono text-sm leading-none">
+              <Clock size={14} className="text-cyan-400" />
+              <span>{formatTime(seconds)}</span>
+            </div>
+            {/* TTS Status Badge */}
+            <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border flex items-center gap-1 ${
+              import.meta.env.VITE_USE_ELEVENLABS === 'true' && import.meta.env.VITE_ELEVENLABS_API_KEY
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                : 'bg-white/5 border-white/10 text-white/40'
+            }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${import.meta.env.VITE_USE_ELEVENLABS === 'true' && import.meta.env.VITE_ELEVENLABS_API_KEY ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`} />
+              {import.meta.env.VITE_USE_ELEVENLABS === 'true' && import.meta.env.VITE_ELEVENLABS_API_KEY ? 'ELEVENLABS AI' : 'BROWSER TTS'}
+            </div>
           </div>
 
           {/* Score Meter */}
@@ -424,6 +451,14 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
 
           {/* Controls */}
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => speakText("ทดสอบเสียงจีบครับ หวังว่าจะถูกใจคุณนะ", gender)}
+              className="text-[10px] bg-white/10 hover:bg-white/20 text-white/80 px-2 py-1 rounded-md border border-white/10 flex items-center gap-1 transition-all active:scale-95"
+              title="ทดสอบเสียง AI"
+            >
+              <Sparkles size={12} className="text-yellow-400" />
+              ลองเสียง
+            </button>
             <select
               value={mode}
               onChange={(e) => {
