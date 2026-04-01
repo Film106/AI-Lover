@@ -1,3 +1,88 @@
 /* ===== App.css - Component-specific styles ===== */
-/* (Global styles are in index.css) */
-* { box-sizing: border-box; }
+
+/* ── Google Fonts: Kanit (MUST be first @import) ── */
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+/* ── Landing: animated vivid gradient background ── */
+@keyframes meshShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.landing-bg {
+    background: linear-gradient(135deg, #ff00cc 0%, #cc00aa 25%, #7700cc 60%, #3333ff 100%) !important;
+    background-size: 250% 250% !important;
+    animation: meshShift 10s ease infinite;
+    background-color: #cc00aa !important;
+    /* fallback, forces no-white */
+}
+
+/* ── Main Card Container ── */
+.main-card {
+    background: rgba(255, 255, 255, 0.85);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 240, 250, 0.85) 50%, rgba(250, 245, 255, 0.8) 100%);
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.35),
+        0 10px 40px rgba(200, 50, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ── Gender Selection Buttons ── */
+.gender-btn {
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    letter-spacing: 0.02em;
+}
+
+.gender-btn:hover {
+    transform: scale(1.05) translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.gender-btn:active {
+    transform: scale(0.97);
+    filter: brightness(0.95);
+}
+
+/* Female Button — Pink */
+.gender-btn--female {
+    background: linear-gradient(135deg, #ff6fb5 0%, #ff4b91 55%, #e8006e 100%) !important;
+    box-shadow:
+        0 6px 25px rgba(255, 75, 145, 0.55),
+        0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gender-btn--female:hover {
+    box-shadow:
+        0 10px 35px rgba(255, 75, 145, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Male Button — Blue/Cyan */
+.gender-btn--male {
+    background: linear-gradient(135deg, #60cbff 0%, #1da1f2 55%, #0070c0 100%) !important;
+    box-shadow:
+        0 6px 25px rgba(29, 161, 242, 0.55),
+        0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gender-btn--male:hover {
+    box-shadow:
+        0 10px 35px rgba(29, 161, 242, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.2);
+}

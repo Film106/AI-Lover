@@ -16,7 +16,7 @@ import {
 // API HELPERS
 // ─────────────────────────────────────────────
 
-/** Get AI Reply + Flirt Score using OpenAI Compatible API (Zhipu/Alibaba) */
+/** Get AI Reply + Flirt Score using OpenAI Compatible API */
 async function getAIReply(userMessage, conversationHistory, gender, mode) {
   const API_KEY = import.meta.env.VITE_API_KEY || import.meta.env.VITE_OPENROUTER_API_KEY;
   if (!API_KEY) throw new Error("คุณลืมตั้งค่า VITE_API_KEY ในไฟล์ .env");
@@ -87,11 +87,11 @@ async function getAIReply(userMessage, conversationHistory, gender, mode) {
   const data = await response.json();
   try {
     const rawText = data.choices[0].message.content;
-    
+
     // Find JSON block in reply (AI might wrap it in ```json ... ```)
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON found in AI reply");
-    
+
     const parsed = JSON.parse(jsonMatch[0]);
     return {
       reply: parsed.reply || "(ยิ้มเจื่อนๆ)",
@@ -102,12 +102,13 @@ async function getAIReply(userMessage, conversationHistory, gender, mode) {
     return { reply: "เอ่อ... ไม่ค่อยเข้าใจเลยค่ะ/ครับ 😅", score_change: 0 };
   }
 }
+
 async function speakWithElevenLabs(text, gender) {
   const API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
   if (!API_KEY) return false;
 
-  const voiceId = gender === 'female' 
-    ? import.meta.env.VITE_ELEVENLABS_VOICE_ID_FEMALE 
+  const voiceId = gender === 'female'
+    ? import.meta.env.VITE_ELEVENLABS_VOICE_ID_FEMALE
     : import.meta.env.VITE_ELEVENLABS_VOICE_ID_MALE;
 
   try {
@@ -121,8 +122,10 @@ async function speakWithElevenLabs(text, gender) {
         text: text,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
+          stability: 0.8,
+          similarity_boost: 0.8,
+          style: 0.0,
+          use_speaker_boost: true
         }
       })
     });
@@ -155,7 +158,7 @@ function useSpeechRecognition(onResult) {
     const rec = new SpeechRecognition();
     rec.continuous = false;
     rec.interimResults = false;
-    rec.lang = "th-TH"; // Thai primary
+    rec.lang = "th-TH";
 
     rec.onresult = (e) => {
       const transcript = e.results[0][0].transcript;
@@ -187,7 +190,7 @@ function useSpeechRecognition(onResult) {
 async function speakText(text, gender) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  
+
   // Try ElevenLabs first if enabled and configured
   if (import.meta.env.VITE_USE_ELEVENLABS === 'true' || import.meta.env.VITE_ELEVENLABS_API_KEY) {
     const success = await speakWithElevenLabs(text, gender);
@@ -200,22 +203,30 @@ async function speakText(text, gender) {
 
   const voices = window.speechSynthesis.getVoices();
   const thVoices = voices.filter(v => v.lang.startsWith("th"));
-  
+
   // Gender matching for common Thai voices
   let selectedVoice = null;
   if (gender === 'female') {
-    // Attempt to find female-sounding voices (common names)
-    selectedVoice = thVoices.find(v => v.name.toLowerCase().includes("premawadee") || v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("online"));
+    selectedVoice = thVoices.find(v =>
+      v.name.toLowerCase().includes("premawadee") ||
+      v.name.toLowerCase().includes("narisa") ||
+      v.name.toLowerCase().includes("kanokwan") ||
+      v.name.toLowerCase().includes("online") ||
+      v.name.toLowerCase().includes("google")
+    );
   } else {
-    // Attempt to find male-sounding voices
-    selectedVoice = thVoices.find(v => v.name.toLowerCase().includes("pattara") || (!v.name.toLowerCase().includes("premawadee") && !v.name.toLowerCase().includes("siri")));
+    selectedVoice = thVoices.find(v =>
+      v.name.toLowerCase().includes("pattara") ||
+      v.name.toLowerCase().includes("sakda") ||
+      (!v.name.toLowerCase().includes("premawadee") && !v.name.toLowerCase().includes("narisa") && !v.name.toLowerCase().includes("siri"))
+    );
   }
 
   utterance.voice = selectedVoice || thVoices[0] || voices[0];
   utterance.lang = "th-TH";
   utterance.pitch = gender === 'female' ? 1.1 : 0.85;
   utterance.rate = 0.95;
-  
+
   window.speechSynthesis.speak(utterance);
 }
 
@@ -223,15 +234,14 @@ async function speakText(text, gender) {
 // UTILS
 // ─────────────────────────────────────────────
 
-const formatTime = (s) => `${Math.floor(s/60).toString().padStart(2, '0')}:${(s%60).toString().padStart(2, '0')}`;
+const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
 function getAvatarUrl(gender) {
-  // Use a random seed to get a slightly different character each time they refresh
-  const seeds = gender === 'female' 
-    ? ['Sara', 'Lily', 'Mimi', 'Chloe', 'Zoe', 'Aneka', 'Jessica'] 
+  const seeds = gender === 'female'
+    ? ['Sara', 'Lily', 'Mimi', 'Chloe', 'Zoe', 'Aneka', 'Jessica']
     : ['Felix', 'Max', 'Leo', 'Jack', 'Caleb', 'Liam', 'Oliver'];
   const seed = seeds[Math.floor(Math.random() * seeds.length)];
-  const bg = gender === 'female' ? 'fbcfe8' : 'bfdbfe'; // pinkish vs blueish
+  const bg = gender === 'female' ? 'fbcfe8' : 'bfdbfe';
   return `https://api.dicebear.com/8.x/adventurer/svg?seed=${seed}&backgroundColor=${bg}`;
 }
 
@@ -239,67 +249,174 @@ function getAvatarUrl(gender) {
 // SUB-COMPONENTS
 // ─────────────────────────────────────────────
 
+function FloatingItem({ item, mousePos }) {
+  const ref = useRef(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    const dx = centerX - mousePos.x;
+    const dy = centerY - mousePos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Repel radius (150px)
+    if (dist > 0 && dist < 150) {
+      const force = (150 - dist) / 150; // 0 to 1
+      setOffset({
+        x: (dx / dist) * force * 80, // jump away up to 80px
+        y: (dy / dist) * force * 80
+      });
+    } else {
+      // Ease back
+      setOffset(prev => ({
+        x: prev.x * 0.9,
+        y: prev.y * 0.9
+      }));
+    }
+  }, [mousePos]);
+
+  return (
+    <div
+      className="absolute transition-transform duration-300 ease-out will-change-transform"
+      style={{
+        left: `${item.x}%`,
+        top: `${item.y}%`,
+        transform: `translate(${offset.x}px, ${offset.y}px)`,
+        zIndex: 0
+      }}
+    >
+      <span
+        ref={ref}
+        className="block text-4xl animate-bounce"
+        style={{
+          animationDelay: `${item.delay}s`,
+          animationDuration: `${item.dur}s`,
+          filter: "drop-shadow(0 15px 15px rgba(0,0,0,0.5))",
+          opacity: 0.8
+        }}
+      >
+        {item.char}
+      </span>
+    </div>
+  );
+}
+
 function FloatingEmoji({ emojis }) {
+  const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {emojis.map((e, i) => (
-        <span
-          key={i}
-          className="absolute text-2xl animate-bounce opacity-50"
-          style={{ left: `${e.x}%`, top: `${e.y}%`, animationDelay: `${e.delay}s`, animationDuration: `${e.dur}s` }}
-        >
-          {e.char}
-        </span>
+        <FloatingItem key={i} item={e} mousePos={mousePos} />
       ))}
     </div>
   );
 }
 
 const BG_EMOJIS = [
-  { char: "❤️", x: 5, y: 10, delay: 0, dur: 2.5 },
-  { char: "🌸", x: 88, y: 15, delay: 0.4, dur: 3 },
-  { char: "✨", x: 20, y: 80, delay: 0.8, dur: 2 },
-  { char: "💘", x: 75, y: 75, delay: 1.2, dur: 2.8 },
-  { char: "💖", x: 50, y: 5, delay: 0.3, dur: 3.2 },
-  { char: "💫", x: 90, y: 50, delay: 0.7, dur: 2.6 },
+  { char: "💖", x: 10, y: 15, delay: 0, dur: 4 },
+  { char: "✨", x: 88, y: 20, delay: 0.4, dur: 5 },
+  { char: "💜", x: 20, y: 80, delay: 1.2, dur: 4.5 },
+  { char: "🌌", x: 75, y: 75, delay: 0.8, dur: 5.5 },
+  { char: "💗", x: 50, y: 10, delay: 0.3, dur: 6 },
+  { char: "🌠", x: 90, y: 50, delay: 0.7, dur: 4.2 },
+  { char: "💫", x: 5, y: 50, delay: 1.5, dur: 4.8 },
+  { char: "💕", x: 60, y: 85, delay: 0.9, dur: 3.8 },
+  { char: "💝", x: 30, y: 30, delay: 1.1, dur: 5.2 },
+  { char: "💌", x: 80, y: 40, delay: 1.8, dur: 4.6 },
+  { char: "💖", x: 15, y: 60, delay: 0.2, dur: 5.8 },
+  { char: "✨", x: 95, y: 80, delay: 1.4, dur: 6.2 },
+  { char: "🌸", x: 40, y: 70, delay: 0.6, dur: 4.4 },
+  { char: "🌷", x: 70, y: 10, delay: 1.0, dur: 5.0 },
+  { char: "😻", x: 10, y: 40, delay: 0.5, dur: 5.5 },
+  { char: "💘", x: 45, y: 85, delay: 1.7, dur: 4.0 },
+  { char: "🌹", x: 85, y: 90, delay: 0.1, dur: 5.1 },
+  { char: "💋", x: 65, y: 15, delay: 1.3, dur: 4.3 }
 ];
 
 // ─── STATE 1: LANDING ─────────────────────────
 function LandingScreen({ onStart }) {
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-rose-400 via-fuchsia-500 to-violet-600">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-[#4a0018] via-[#8a0044] to-[#520022]">
+
+      {/* 3D background elements */}
       <FloatingEmoji emojis={BG_EMOJIS} />
 
-      {/* Glassy card */}
-      <div className="relative z-10 w-full max-w-sm bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl p-8 shadow-2xl text-center">
-        <h1 className="text-5xl font-black text-white drop-shadow-lg tracking-tight mb-2" style={{ fontFamily: "'Pacifico', cursive, sans-serif" }}>
-          AI Lover
-        </h1>
-        <p className="text-white/80 text-sm font-medium mb-8">
-          เกมจำลองจีบ AI งัดสกิลฝีปากจีบให้ติด 100%! 🎤💬
-        </p>
+      {/* Cinematic Lighting overlays for background */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.15),transparent_60%)] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_100%,rgba(0,0,0,0.5),transparent_60%)] pointer-events-none" />
 
-        <p className="text-white font-bold mb-4">คุณต้องการจะจีบ...?</p>
+      {/* Premium Rose-Gold Metal Frame Wrapper */}
+      <div className="relative z-10 w-full max-w-md p-[3px] rounded-[2.2rem] bg-gradient-to-br from-[#ff55a3] via-[#ff006a] to-[#d900ff] shadow-[0_30px_60px_-15px_rgba(255,0,106,0.5)]">
 
-        {/* Gender Selection */}
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={() => onStart('female')}
-            className="w-full py-4 rounded-2xl border-2 border-pink-400 bg-pink-500 text-white font-bold text-lg hover:bg-pink-400 hover:scale-105 transition-all shadow-lg shadow-pink-500/50 flex items-center justify-center gap-2"
+        {/* Glassmorphism Panel */}
+        <div className="relative w-full h-full bg-black/30 backdrop-blur-2xl rounded-[2rem] p-8 text-center overflow-hidden border border-white/10 shadow-[inset_0_2px_20px_rgba(255,255,255,0.15)] flex flex-col items-center">
+
+          {/* Glass Reflective Surface Highlights */}
+          <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/10 to-transparent pointer-events-none rounded-t-[2rem]" />
+          <div className="absolute -inset-10 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 transform rotate-12 pointer-events-none mix-blend-overlay" />
+
+          {/* 3D Silver Text Title */}
+          <h1
+            className="text-6xl font-black mb-3 relative z-10"
+            style={{
+              fontFamily: "'Pacifico', cursive, sans-serif",
+              color: "#e8e8e8",
+              textShadow: "0 1px 0 #fff, 0 2px 0 #d9d9d9, 0 3px 0 #bdbdbd, 0 4px 0 #9e9e9e, 0 5px 0 #7a7a7a, 0 15px 25px rgba(0,0,0,0.8)",
+              letterSpacing: "0.05em"
+            }}
           >
-            🌸 สาวน้อยน่ารัก (Female)
-          </button>
-          
-          <button
-            onClick={() => onStart('male')}
-            className="w-full py-4 rounded-2xl border-2 border-blue-400 bg-blue-500 text-white font-bold text-lg hover:bg-blue-400 hover:scale-105 transition-all shadow-lg shadow-blue-500/50 flex items-center justify-center gap-2"
-          >
-            💙 หนุ่มหล่ออบอุ่น (Male)
-          </button>
+            AI Lover
+          </h1>
+
+          <p className="text-white/90 text-[15px] sm:text-[17px] font-extrabold mb-8 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] relative z-10 w-full max-w-[90%]">
+            ลองจีบให้ติดแลถิ อย่าเก่งแต่ปากพร้อมแล้วอย่าแชอยู่!
+          </p>
+
+          <p className="text-white/80 font-bold mb-5 text-base sm:text-lg uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] relative z-10">
+            อยากจีบใครเลือกเอาน้องบ่าวหรือน้องสาว?
+          </p>
+
+          {/* 3D Buttons Area */}
+          <div className="flex flex-row gap-4 w-full relative z-10">
+
+            {/* Female Button */}
+            <button
+              onClick={() => onStart('female')}
+              className="group relative flex-1 pt-5 pb-4 px-2 rounded-2xl bg-gradient-to-b from-[#ff6fb5] to-[#ff2a7a] text-white flex flex-col items-center justify-center gap-2 transition-all duration-200 ease-out shadow-[0_8px_0_#9a0047,0_15px_20px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:shadow-[0_10px_0_#9a0047,0_20px_25px_rgba(0,0,0,0.6)] hover:brightness-110 active:translate-y-2 active:shadow-[0_0px_0_#9a0047,0_2px_5px_rgba(0,0,0,0.5)] border-t border-white/40 overflow-hidden"
+            >
+              <span className="text-[3rem] sm:text-[3.5rem] drop-shadow-[0_5px_5px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform duration-300">🌸</span>
+              <span className="font-extrabold text-[15px] sm:text-[17px] leading-tight drop-shadow-md">สาวนุ้ย<br /><span className="text-[12px] sm:text-[13px] text-white/80 font-semibold">(Female)</span></span>
+              {/* Inner highlight */}
+              <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+            </button>
+
+            {/* Male Button */}
+            <button
+              onClick={() => onStart('male')}
+              className="group relative flex-1 pt-5 pb-4 px-2 rounded-2xl bg-gradient-to-b from-[#38bdf8] to-[#0284c7] text-white flex flex-col items-center justify-center gap-2 transition-all duration-200 ease-out shadow-[0_8px_0_#004d7a,0_15px_20px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:shadow-[0_10px_0_#004d7a,0_20px_25px_rgba(0,0,0,0.6)] hover:brightness-110 active:translate-y-2 active:shadow-[0_0px_0_#004d7a,0_2px_5px_rgba(0,0,0,0.5)] border-t border-white/40 overflow-hidden"
+            >
+              <span className="text-[3rem] sm:text-[3.5rem] drop-shadow-[0_5px_5px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform duration-300">💙</span>
+              <span className="font-extrabold text-[15px] sm:text-[17px] leading-tight drop-shadow-md">พี่บ่าว<br /><span className="text-[12px] sm:text-[13px] text-white/80 font-semibold">(Male)</span></span>
+              {/* Inner highlight */}
+              <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+            </button>
+
+          </div>
         </div>
       </div>
 
-      <p className="relative z-10 mt-6 text-white/40 text-xs text-center w-full max-w-xs">
+      <p className="relative z-10 mt-8 text-white/40 text-[10px] text-center w-full max-w-sm uppercase tracking-widest drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
         คำชี้แจง: ไม่เก็บข้อมูลการสนทนา · ประมวลผลด้วย Gemini AI
       </p>
     </div>
@@ -307,22 +424,29 @@ function LandingScreen({ onStart }) {
 }
 
 // ─── STATE 2: VOICE DATING ────────────────────
-function VoiceDatingScreen({ gender, onReset, onSuccess }) {
+function VoiceDatingScreen({ gender, onReset, onSuccess, onGoBack }) {
   const [conversation, setConversation] = useState([
     { role: "assistant", content: gender === 'female' ? "มีไร รีบๆพิมพ์มา อย่าลีลา 😒" : "ว่าไง มองหน้ามีไรเปล่า? 🤨" }
   ]);
   const [inputText, setInputText] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [mode, setMode] = useState("hardcore"); // sweet, medium, hardcore
+  const [mode, setMode] = useState("hardcore");
   const [error, setError] = useState(null);
-  
-  const [score, setScore] = useState(0); // 0-100 Flirt Score
-  const [seconds, setSeconds] = useState(0); // Timer
 
-  // Fix avatar string once on mount
+  const [score, setScore] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+
   const avatarUrl = useRef(getAvatarUrl(gender)).current;
   const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Auto Focus Input when AI finishes thinking
+  useEffect(() => {
+    if (!isThinking && inputRef.current && score < 100) {
+      setTimeout(() => inputRef.current.focus(), 50);
+    }
+  }, [isThinking, score]);
 
   // Auto Scroll
   useEffect(() => {
@@ -338,7 +462,6 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
   // Check for success condition
   useEffect(() => {
     if (score >= 100) {
-      // Small timeout to allow state to settle, then call onSuccess
       const id = setTimeout(() => {
         onSuccess(seconds, conversation.length);
       }, 1000);
@@ -350,18 +473,16 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
     setError(null);
     setIsThinking(true);
 
-    // Add user message to UI immediately
     setConversation((prev) => [...prev, { role: "user", content: text }]);
 
-    // Only send history (excluding first fake assistant greeting)
     const history = conversation.map((m) => ({
       role: m.role, content: m.content,
-    })).filter((m, i) => i > 0 || m.role === 'user'); // Ensure we always send something valid if possible
+    })).filter((m, i) => i > 0 || m.role === 'user');
 
     try {
       const { reply, score_change } = await getAIReply(text, history, gender, mode);
       setScore(prev => Math.min(100, Math.max(0, prev + score_change)));
-      
+
       setConversation((prev) => [
         ...prev,
         { role: "assistant", content: reply },
@@ -395,16 +516,51 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
     sendMessageToAI(txt);
   };
 
+  // ── Go Back to Landing ──
+  const handleGoBack = () => {
+    setConversation([]);
+    setScore(0);
+    setSeconds(0);
+    setInputText("");
+    setError(null);
+    if (onGoBack) onGoBack();
+  };
+
+  const isElevenLabsEnabled = import.meta.env.VITE_USE_ELEVENLABS === 'true' && import.meta.env.VITE_ELEVENLABS_API_KEY;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-indigo-950 to-purple-950 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md h-[90vh] max-h-[850px] min-h-[600px] flex flex-col bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-4 shadow-2xl relative overflow-hidden">
-        
+
+        {/* ── Back Button ── */}
+        <div className="flex-shrink-0 w-full mb-3 z-10">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 backdrop-blur-md text-white/80 hover:text-white text-sm font-semibold transition-all duration-200 shadow-lg group"
+            title="กลับหน้าหลัก"
+          >
+            <span className="text-base leading-none group-hover:-translate-x-1 transition-transform duration-200">‹</span>
+            <span>ย้อนกลับ</span>
+          </button>
+        </div>
+
         {/* Header Info Bar */}
         <div className="flex-shrink-0 flex items-center justify-between mb-4 bg-white/5 p-3 rounded-2xl border border-white/10 backdrop-blur-md shadow-lg z-10 w-full">
-          {/* Timer */}
-          <div className="flex items-center gap-2 text-white/80 font-mono text-sm">
-            <Clock size={16} className="text-cyan-400" />
-            <span>{formatTime(seconds)}</span>
+
+          {/* Timer & TTS Status */}
+          <div className="flex flex-col gap-1 items-start">
+            <div className="flex items-center gap-2 text-white/80 font-mono text-sm leading-none">
+              <Clock size={14} className="text-cyan-400" />
+              <span>{formatTime(seconds)}</span>
+            </div>
+            {/* TTS Engine Badge */}
+            <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border flex items-center gap-1 ${isElevenLabsEnabled
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+              : 'bg-white/5 border-white/10 text-white/40'
+              }`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${isElevenLabsEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`} />
+              {isElevenLabsEnabled ? 'ELEVENLABS AI' : 'BROWSER TTS'}
+            </div>
           </div>
 
           {/* Score Meter */}
@@ -414,7 +570,7 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
               <span className="text-white text-xs font-bold tracking-wide">คะแนนใจ</span>
             </div>
             <div className="w-full max-w-[120px] h-2.5 bg-gray-800 rounded-full overflow-hidden border border-gray-700 relative">
-              <div 
+              <div
                 className={`h-full bg-gradient-to-r ${gender === 'female' ? 'from-pink-400 to-rose-600' : 'from-cyan-400 to-blue-600'} transition-all duration-1000 ease-out`}
                 style={{ width: `${score}%` }}
               />
@@ -424,11 +580,19 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
 
           {/* Controls */}
           <div className="flex items-center gap-2">
+            {/* Test Voice Button */}
+            <button
+              onClick={() => speakText(gender === 'female' ? "สวัสดีค่ะ ลองเสียงหน่อยนะคะ" : "สวัสดีครับ ลองเสียงหน่อยนะครับ", gender)}
+              className="text-[10px] bg-white/10 hover:bg-white/20 text-white/70 hover:text-white px-2 py-1 rounded-md border border-white/10 flex items-center gap-1 transition-all active:scale-95"
+              title="ทดสอบเสียง TTS"
+            >
+              <Sparkles size={11} className="text-yellow-400" />
+              ลองเสียง
+            </button>
             <select
               value={mode}
               onChange={(e) => {
                 setMode(e.target.value);
-                // Resets chat when changing difficulty
                 setConversation([{ role: "assistant", content: e.target.value === 'sweet' ? (gender === 'female' ? "สวัสดีค่ะพี่... 😳" : "ไงครับคนสวย 😊") : e.target.value === 'hardcore' ? (gender === 'female' ? "มีไร รีบๆพิมพ์มา อย่าลีลา 😒" : "ว่าไง มองหน้ามีไรเปล่า? 🤨") : (gender === 'female' ? "หวัดดีค่า มีอะไรให้เราช่วยไหม? ✨" : "หวัดดีครับ ว่าไง? 💬") }]);
                 setScore(0);
                 setSeconds(0);
@@ -469,12 +633,11 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
                   {gender === 'female' ? '👧' : '👦'}
                 </div>
               )}
-              
-              <div className={`rounded-2xl px-4 py-3 max-w-[85%] shadow-md ${
-                msg.role === 'user' 
-                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 rounded-tr-sm text-white' 
-                  : 'bg-white/15 border border-white/20 rounded-tl-sm text-white'
-              }`}>
+
+              <div className={`rounded-2xl px-4 py-3 max-w-[85%] shadow-md ${msg.role === 'user'
+                ? 'bg-gradient-to-br from-indigo-500 to-purple-600 rounded-tr-sm text-white'
+                : 'bg-white/15 border border-white/20 rounded-tl-sm text-white'
+                }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
               </div>
             </div>
@@ -504,6 +667,8 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
             {/* Text Input */}
             <form className="flex-1 flex bg-transparent" onSubmit={handleTextSubmit}>
               <input
+                ref={inputRef}
+                autoFocus
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
@@ -514,9 +679,8 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
               <button
                 type="submit"
                 disabled={!inputText.trim() || isThinking || score >= 100}
-                className={`p-2 rounded-xl text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                  inputText.trim() ? 'bg-gradient-to-r from-pink-500 to-purple-600 shadow-md hover:scale-105 active:scale-95' : 'bg-white/10'
-                }`}
+                className={`p-2 rounded-xl text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${inputText.trim() ? 'bg-gradient-to-r from-pink-500 to-purple-600 shadow-md hover:scale-105 active:scale-95' : 'bg-white/10'
+                  }`}
               >
                 <Send size={18} />
               </button>
@@ -531,9 +695,8 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
                 onTouchStart={(e) => { e.preventDefault(); startListening(); }}
                 onTouchEnd={(e) => { e.preventDefault(); stopListening(); }}
                 disabled={isThinking || score >= 100}
-                className={`p-3 rounded-xl flex items-center justify-center transition-all ${
-                  isListening ? 'bg-red-500 text-white animate-pulse shadow-lg scale-110' : 'bg-white/15 text-white/80 hover:bg-white/25 hover:text-white'
-                } disabled:opacity-50`}
+                className={`p-3 rounded-xl flex items-center justify-center transition-all ${isListening ? 'bg-red-500 text-white animate-pulse shadow-lg scale-110' : 'bg-white/15 text-white/80 hover:bg-white/25 hover:text-white'
+                  } disabled:opacity-50`}
                 title="กดค้างเพื่อพูด"
               >
                 <Mic size={20} />
@@ -553,7 +716,6 @@ function VoiceDatingScreen({ gender, onReset, onSuccess }) {
 
 // ─── STATE 3: SUCCESS SCREEN ──────────────────
 function SuccessScreen({ timeSpent, totalLines, gender, onReset }) {
-  // Use confetti emojis array
   const CONFETTI = [
     { char: "🎉", x: 10, y: -10, delay: 0, dur: 1.5 },
     { char: "💖", x: 30, y: -20, delay: 0.2, dur: 2 },
@@ -567,7 +729,6 @@ function SuccessScreen({ timeSpent, totalLines, gender, onReset }) {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden bg-gradient-to-br from-yellow-400 via-pink-400 to-fuchsia-500">
-      {/* Falling confetti animation using simple css keyframes */}
       <style>{`
         @keyframes fall {
           0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
@@ -578,8 +739,8 @@ function SuccessScreen({ timeSpent, totalLines, gender, onReset }) {
 
       <div className="absolute inset-0 pointer-events-none">
         {CONFETTI.map((c, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className="confetti-piece absolute text-4xl"
             style={{ left: `${c.x}%`, animationDuration: `${c.dur + 1.5}s`, animationDelay: `${c.delay}s` }}
           >
@@ -592,7 +753,7 @@ function SuccessScreen({ timeSpent, totalLines, gender, onReset }) {
         <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg border-4 border-yellow-300">
           <PartyPopper size={48} className="text-pink-500" />
         </div>
-        
+
         <h1 className="text-4xl font-black text-white drop-shadow-md mb-2">จีบติดแล้ว!</h1>
         <p className="text-white/90 font-bold mb-6">
           {gender === 'female' ? 'คุณพิชิตใจสาวน้อยสำเร็จ 💖' : 'คุณพิชิตใจหนุ่มหล่อสำเร็จ 💙'}
@@ -627,11 +788,9 @@ function SuccessScreen({ timeSpent, totalLines, gender, onReset }) {
 // ROOT APP
 // ─────────────────────────────────────────────
 export default function App() {
-  // landing -> dating -> success
   const [screen, setScreen] = useState("landing");
   const [gender, setGender] = useState('female');
-  
-  // Results
+
   const [timeSpent, setTimeSpent] = useState(0);
   const [totalLines, setTotalLines] = useState(0);
 
@@ -657,7 +816,6 @@ export default function App() {
     link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Pacifico&display=swap";
     document.head.appendChild(link);
-    // Custom scrollbar
     const style = document.createElement("style");
     style.innerHTML = `.custom-scrollbar::-webkit-scrollbar { width: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }`;
     document.head.appendChild(style);
@@ -673,6 +831,7 @@ export default function App() {
           gender={gender}
           onReset={handleReset}
           onSuccess={handleSuccess}
+          onGoBack={handleReset}
         />
       )}
       {screen === "success" && (
