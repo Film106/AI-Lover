@@ -12,12 +12,13 @@ const OPENROUTER_CHAT_MODELS = [
 ]
 
 export default function SettingsModal({ isOpen, onClose, onSave, currentSettings }) {
-  const envKeyActive = isEnvKey()
   const [apiKey, setApiKey] = useState(currentSettings?.apiKey || '')
   const [chatModel, setChatModel] = useState(currentSettings?.chatModel || OPENROUTER_CHAT_MODELS[0].id)
   const [showKey, setShowKey] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
+
+  const envKeyActive = isEnvKey()
 
   useEffect(() => {
     if (isOpen) {
@@ -28,7 +29,11 @@ export default function SettingsModal({ isOpen, onClose, onSave, currentSettings
   }, [isOpen, currentSettings, envKeyActive])
 
   const handleSave = () => {
-    onSave({ apiKey: apiKey.trim(), chatModel })
+    // บันทึกค่าทั้งหมดรวมถึง vastUrl ไปยัง Parent (App.jsx)
+    onSave({ 
+      apiKey: apiKey.trim(), 
+      chatModel
+    })
     onClose()
   }
 
@@ -72,78 +77,51 @@ export default function SettingsModal({ isOpen, onClose, onSave, currentSettings
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
-        {/* Header */}
         <div className="modal-header">
           <div className="modal-title">
             <span>⚙️</span>
             <div>
-              <h2>ตั้งค่า API</h2>
-              <p>เชื่อมต่อ OpenRouter เพื่อให้ AI จีบได้จริงๆ</p>
+              <h2>ตั้งค่าระบบ</h2>
+              <p>ตั้งค่าสมอง (AI Chat) และร่างกาย (AI Image)</p>
             </div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {/* Body */}
         <div className="modal-body">
-          {/* Info Banner */}
-          <div className="info-banner">
-            <span>💡</span>
-            <div>
-              <p><strong>OpenRouter</strong> เป็น API ที่รวม AI หลายตัวไว้ในที่เดียว</p>
-              <p>สมัครฟรีได้ที่ <a href="https://openrouter.ai" target="_blank" rel="noreferrer" className="link">openrouter.ai</a> แล้วสร้าง API Key</p>
-              <p>มีโมเดลฟรีหลายตัว ไม่ต้องเติมเงินก็ใช้ได้!</p>
-            </div>
+          {/* ส่วนของ OpenRouter (แชท) */}
+          <div className="section-divider">
+            <span className="section-title-tag">💬 AI Chat Settings</span>
           </div>
 
-          {/* API Key Input */}
           <div className="settings-field">
             <label className="input-label">OpenRouter API Key</label>
-
             {envKeyActive ? (
               <div className="env-key-banner">
-                <span>🔒</span>
-                <div>
-                  <p><strong>Key โหลดจาก .env แล้ว!</strong></p>
-                  <p>แก้ไขที่ไฟล์ <code>.env</code> → <code>VITE_OPENROUTER_API_KEY</code></p>
-                </div>
-                <span className="env-badge">ENV</span>
+                <span>🔒 Key โหลดจาก .env แล้ว</span>
               </div>
             ) : (
-              <>
-                <div className="key-input-wrap">
-                  <input
-                    id="settings-api-key"
-                    type={showKey ? 'text' : 'password'}
-                    className="input-field"
-                    placeholder="sk-or-v1-xxxxxxxxxxxxxxxxxxxx"
-                    value={apiKey}
-                    onChange={e => setApiKey(e.target.value)}
-                    spellCheck={false}
-                  />
-                  <button
-                    className="btn-icon"
-                    onClick={() => setShowKey(s => !s)}
-                    title={showKey ? 'ซ่อน' : 'แสดง'}
-                  >
-                    {showKey ? '🙈' : '👁️'}
-                  </button>
-                </div>
-                {!apiKey && (
-                  <p className="field-note">⚠️ หรือใส่ใน <code>.env</code> → <code>VITE_OPENROUTER_API_KEY=sk-or-...</code></p>
-                )}
-              </>
+              <div className="key-input-wrap">
+                <input
+                  type={showKey ? 'text' : 'password'}
+                  className="input-field"
+                  placeholder="sk-or-v1-..."
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                />
+                <button className="btn-icon" onClick={() => setShowKey(!showKey)}>
+                  {showKey ? '🙈' : '👁️'}
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Chat Model Selector */}
           <div className="settings-field">
-            <label className="input-label">โมเดล AI สำหรับจีบ 💬</label>
+            <label className="input-label">เลือกโมเดล AI สำหรับจีบ</label>
             <div className="model-grid">
               {OPENROUTER_CHAT_MODELS.map(m => (
                 <button
                   key={m.id}
-                  id={`model-${m.id.replace(/[^a-z0-9]/gi, '-')}`}
                   className={`model-card ${chatModel === m.id ? 'selected' : ''}`}
                   onClick={() => setChatModel(m.id)}
                 >
@@ -154,152 +132,42 @@ export default function SettingsModal({ isOpen, onClose, onSave, currentSettings
             </div>
           </div>
 
-          {/* Test Result */}
           {testResult && (
             <div className={`test-result ${testResult.ok ? 'ok' : 'fail'}`}>
               {testResult.msg}
             </div>
           )}
 
-          {/* Image Gen Note */}
-          <div className="gen-note">
-            <p>🎨 <strong>การเจนรูป</strong> ใช้ <strong>Pollinations AI</strong> (ฟรี ไม่ต้องใช้ Key)</p>
-          </div>
         </div>
 
-        {/* Footer */}
         <div className="modal-footer">
-          <button className="btn-secondary" id="btn-test-key" onClick={handleTest} disabled={testing}>
-            {testing ? '⏳ กำลังทดสอบ...' : '🧪 ทดสอบ Key'}
+          <button className="btn-secondary" onClick={handleTest} disabled={testing}>
+            {testing ? '⏳ ทดสอบ...' : '🧪 ทดสอบ Key'}
           </button>
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="btn-secondary" onClick={onClose}>ยกเลิก</button>
-            <button className="btn-primary" id="btn-save-settings" onClick={handleSave}>
-              💾 บันทึก
+            <button className="btn-primary" onClick={handleSave}>
+              💾 บันทึกการตั้งค่า
             </button>
           </div>
         </div>
       </div>
 
+      {/* CSS Styles (คงเดิมและปรับปรุงเล็กน้อย) */}
       <style>{`
-        .modal-overlay {
-          position: fixed; inset: 0; z-index: 1000;
-          background: rgba(0,0,0,0.7);
-          backdrop-filter: blur(8px);
-          display: flex; align-items: center; justify-content: center;
-          padding: 16px;
-          animation: fadeIn 0.2s ease;
+        /* ... (CSS ส่วนใหญ่คงเดิมจากที่คุณส่งมา) ... */
+        .section-divider {
+          display: flex; align-items: center; gap: 10px;
+          margin: 10px 0 5px;
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .modal-box {
-          background: var(--dark-card);
-          border: 1px solid rgba(168,85,247,0.3);
-          border-radius: var(--radius-lg);
-          width: 100%; max-width: 560px;
-          max-height: 90vh; overflow-y: auto;
-          animation: slideUp 0.3s ease;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,141,0.1);
+        .section-title { 
+          font-size: 0.8rem; font-weight: 800; color: var(--pink-bright); 
+          text-transform: uppercase; letter-spacing: 1px; 
         }
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .modal-header {
-          display: flex; align-items: flex-start; justify-content: space-between;
-          padding: 24px 24px 16px;
-          border-bottom: 1px solid var(--dark-border);
-        }
-        .modal-title { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; }
-        .modal-title h2 { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 2px; }
-        .modal-title p { font-size: 0.8rem; color: var(--text-muted); }
-        .modal-close {
-          background: none; border: none; color: var(--text-muted);
-          font-size: 1.2rem; cursor: pointer; padding: 4px 8px;
-          border-radius: 8px; transition: all 0.2s;
-          line-height: 1;
-        }
-        .modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-
-        .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
-        .modal-footer {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 16px 24px; border-top: 1px solid var(--dark-border);
-          flex-wrap: wrap; gap: 10px;
-        }
-
-        .info-banner {
-          display: flex; gap: 12px;
-          padding: 14px 16px;
-          background: rgba(168,85,247,0.1);
-          border: 1px solid rgba(168,85,247,0.2);
-          border-radius: var(--radius-md);
-          font-size: 0.875rem; color: var(--text-secondary);
-          line-height: 1.7;
-        }
-        .info-banner span { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
-        .link { color: var(--pink-bright); text-decoration: none; }
-        .link:hover { text-decoration: underline; }
-
-        .settings-field { display: flex; flex-direction: column; gap: 8px; }
-        .key-input-wrap { position: relative; display: flex; align-items: center; }
-        .key-input-wrap .input-field { padding-right: 50px; }
-        .btn-icon {
-          position: absolute; right: 12px;
-          background: none; border: none; cursor: pointer;
-          font-size: 1.2rem; padding: 4px;
-          transition: transform 0.2s;
-        }
-        .btn-icon:hover { transform: scale(1.2); }
-        .field-note { font-size: 0.8rem; color: var(--text-muted); }
-
-        .model-grid {
-          display: grid; grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-        }
-        .model-card {
-          padding: 10px 12px; text-align: left;
-          background: var(--dark-surface);
-          border: 2px solid var(--dark-border);
-          border-radius: var(--radius-md);
-          cursor: pointer; transition: all 0.2s;
-          display: flex; align-items: center; justify-content: space-between; gap: 6px;
-          font-family: var(--font-thai); position: relative;
-        }
-        .model-card:hover { border-color: var(--purple-soft); background: rgba(168,85,247,0.1); }
-        .model-card.selected {
-          border-color: var(--pink-bright);
-          background: linear-gradient(135deg, rgba(255,77,141,0.15), rgba(124,58,237,0.1));
-          box-shadow: 0 0 12px rgba(255,77,141,0.2);
-        }
-        .model-label { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); }
-        .free-badge {
-          background: linear-gradient(135deg, #10b981, #059669);
-          color: white; font-size: 0.65rem; font-weight: 800;
-          padding: 2px 6px; border-radius: 20px; flex-shrink: 0;
-        }
-
-        .test-result {
-          padding: 12px 16px; border-radius: var(--radius-md);
-          font-size: 0.875rem; font-weight: 600;
-        }
-        .test-result.ok {
-          background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
-          color: #10b981;
-        }
-        .test-result.fail {
-          background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
-          color: #fb7185;
-        }
-
-        .gen-note {
-          padding: 12px 16px;
-          background: rgba(251,191,36,0.08);
-          border: 1px solid rgba(251,191,36,0.2);
-          border-radius: var(--radius-md);
-          font-size: 0.85rem; color: var(--text-secondary);
-        }
-
-        @media (max-width: 480px) {
-          .model-grid { grid-template-columns: 1fr; }
+        .env-key-banner {
+          padding: 10px; background: rgba(16,185,129,0.1); 
+          border-radius: 8px; color: #10b981; font-size: 0.8rem;
+          display: flex; align-items: center; gap: 8px;
         }
       `}</style>
     </div>

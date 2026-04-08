@@ -1,273 +1,265 @@
 import { useState, useRef, useEffect } from 'react'
+import { getVastSettings, chatWithAI } from '../api'
 import './components.css'
 
-const AI_CHARACTERS = [
-  {
-    id: 'prince',
-    emoji: '🤴',
-    name: 'เจ้าชาย Charming',
-    desc: 'หล่อ หรู สุภาพ แต่แอบอสัตย์',
-    voice: { pitch: 0.8, rate: 0.85, name: 'male' },
-    color: '#fbbf24'
-  },
-  {
-    id: 'romeo',
-    emoji: '🌹',
-    name: 'โรมิโอ สยบสาว',
-    desc: 'พูดโรแมนติก แต่มีพิรุธมาก',
-    voice: { pitch: 0.9, rate: 0.9, name: 'male' },
-    color: '#f43f5e'
-  },
-  {
-    id: 'nerd',
-    emoji: '🤓',
-    name: 'หนุ่มเนิร์ด ขาแว่น',
-    desc: 'จีบด้วยสมการ สถิติ และ Excel',
-    voice: { pitch: 1.1, rate: 1.0, name: 'male' },
-    color: '#06b6d4'
-  },
-  {
-    id: 'alien',
-    emoji: '👽',
-    name: 'เอเลี่ยน Z-9',
-    desc: 'มาจากดาวอื่น ไม่เข้าใจโลกมนุษย์',
-    voice: { pitch: 1.4, rate: 1.1, name: 'alien' },
-    color: '#10b981'
-  }
-]
+const AI_CHARACTERS = {
+  male: [
+    { id: 'prince', emoji: '🤴', name: 'เจ้าชาย Charming', desc: 'หล่อ หรู สุภาพ แต่แอบอสัตย์', color: '#fbbf24' },
+    { id: 'romeo',  emoji: '🌹', name: 'โรมิโอ สยบสาว', desc: 'พูดโรแมนติก แต่มีพิรุธมาก', color: '#f43f5e' },
+    { id: 'nerd',   emoji: '🤓', name: 'หนุ่มเนิร์ด ขาแว่น', desc: 'จีบด้วยสมการ สถิติ และ Excel', color: '#06b6d4' },
+    { id: 'alien',  emoji: '👽', name: 'เอเลี่ยน Z-9', desc: 'มาจากดาวอื่น ไม่เข้าใจโลกมนุษย์', color: '#10b981' }
+  ],
+  female: [
+    { id: 'princess',  emoji: '👸', name: 'เจ้าหญิงผู้งดงาม', desc: 'สวย หรูหรา แต่เอาแต่ใจนิดๆ', color: '#f472b6' },
+    { id: 'yandere',   emoji: '🔪', name: 'สาวยันเดเระ', desc: 'รักคุณมาก... มากจนน่ากลัว', color: '#ef4444' },
+    { id: 'nerd_girl', emoji: '👓', name: 'สาวแว่นหนอนหนังสือ', desc: 'ขี้อาย คุยเก่งแค่เรื่องเรียน', color: '#3b82f6' },
+    { id: 'alien_girl',emoji: '🛸', name: 'เอเลี่ยนสาว Z-9', desc: 'มาจากดาวอื่น มึนๆ เอ๋อๆ', color: '#8b5cf6' }
+  ]
+}
 
-const FUNNY_THEMES = [
-  { id: 'superhero', label: '🦸 ซูเปอร์ฮีโร่', prompt: 'as a superhero with silly cape and muscles pose, comic style, bright colors' },
-  { id: 'royalty', label: '👑 ราชวงศ์โบราณ', prompt: 'as ancient royalty with exaggerated crown and fancy clothes, oil painting style' },
-  { id: 'anime', label: '🌸 ตัวละครอนิเมะ', prompt: 'as anime character with big eyes, dramatic wind effect and sparkles, cute' },
-  { id: 'meme', label: '😂 มีมอินเตอร์เน็ต', prompt: 'in dramatic meme format, funny expression, bold text caption style' },
-  { id: 'boss', label: '💼 บอสนักธุรกิจ', prompt: 'as powerful business mogul in a huge office, with money raining, funny serious face' },
-  { id: 'wizard', label: '🧙 พ่อมดมหัศจรรย์', prompt: 'as a funny wizard with tall hat and glowing wand, magical sparkles everywhere' },
-]
+const PROMPT_TEMPLATES = {
+  male: [
+    "masterpiece, best quality, very aesthetic, absurdres, 1boy, solo, portrait, short messy black hair, handsome, detailed eyes, looking at viewer, casual hoodie, 2d anime style, flat color, solid background",
+    "masterpiece, best quality, very aesthetic, absurdres, 1boy, solo, portrait, smart looking, glasses, office shirt, gentle smile, 2d anime style, flat color",
+    "masterpiece, best quality, very aesthetic, absurdres, 1boy, solo, portrait, street wear, cool expression, spiky hair, neon background, 2d anime style"
+  ],
+  female: [
+    "masterpiece, best quality, very aesthetic, absurdres, 1girl, solo, portrait, cute smile, long straight hair, pink dress, drooling, half-closed eyes, 2d anime style, flat color, solid background",
+    "masterpiece, best quality, very aesthetic, absurdres, 1girl, solo, portrait, short bob hair, looking shy, school uniform, detailed beautiful eyes, 2d anime style, flat color",
+    "masterpiece, best quality, very aesthetic, absurdres, 1girl, solo, portrait, elegant, wavy brown hair, elegant gown, soft lighting, 2d anime style"
+  ]
+};
 
-export default function GenerateStep({ friendPhoto, friendName, onImageGenerated, onBack }) {
-  const [selectedTheme, setSelectedTheme] = useState(null)
+export default function GenerateStep({ gender, friendPhoto, friendName, onImageGenerated, onBack }) {
   const [selectedChar, setSelectedChar] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState(null)
-  const [loadError, setLoadError] = useState(false)
+  const [userPrompt, setUserPrompt] = useState('')
+  const [loadError, setLoadError] = useState(null)
   const [genStatus, setGenStatus] = useState('')
   const prevBlobRef = useRef(null)
 
-  // Hugging Face model endpoints (tried in order)
-  const HF_MODELS = [
-    'black-forest-labs/FLUX.1-schnell',
-    'stabilityai/stable-diffusion-xl-base-1.0',
-  ]
+  const vastUrl = getVastSettings()
 
   const generateImage = async () => {
-    if (!selectedTheme) return
+    if (!vastUrl) {
+      setLoadError("❌ ไม่พบ VITE_VAST_API_URL ในไฟล์ .env");
+      return;
+    }
+
     setIsGenerating(true)
     setGeneratedUrl(null)
-    setLoadError(false)
+    setLoadError(null)
 
-    // Revoke old blob URL to free memory
     if (prevBlobRef.current) URL.revokeObjectURL(prevBlobRef.current)
 
-    const theme = FUNNY_THEMES.find(t => t.id === selectedTheme)
-    const prompt = `Funny cartoon illustration of a person named ${friendName}, ${theme.prompt}, high quality, vibrant colors, detailed`
+    // สุ่ม Prompt ตามเพศเป็นค่าเริ่มต้น
+    const templates = PROMPT_TEMPLATES[gender] || PROMPT_TEMPLATES.female;
+    let randomPrompt = templates[Math.floor(Math.random() * templates.length)];
+    const negativePrompt = "lowres, (bad), text, error, missing, extra, fewer, cropped, jpeg artifacts, worst quality, bad quality, watermark, displeasing, unfinished, chromatic aberration, scan, scan artifacts, floating hair, anti-gravity, ugly";
 
-    const hfToken = import.meta.env.VITE_HF_TOKEN
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(hfToken ? { 'Authorization': `Bearer ${hfToken}` } : {})
-    }
-
-    let success = false
-    for (const model of HF_MODELS) {
-      try {
-        setGenStatus(`🎨 กำลังเจนรูปด้วย ${model.split('/')[1]}...`)
-
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 60000)
-
-        const res = await fetch(
-          `https://api-inference.huggingface.co/models/${model}`,
-          {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              inputs: prompt,
-              parameters: { width: 512, height: 512 }
-            }),
-            signal: controller.signal,
+    try {
+      // แปล Prompt ภาษาไทยเป็นอังกฤษ (ถ้ามี)
+      if (userPrompt.trim()) {
+        setGenStatus('🌐 กำลังแปลคำความต้องการของคุณเป็นภาษา AI...');
+        try {
+          const translated = await chatWithAI([{
+            role: 'system', 
+            content: 'You are an expert Danbooru tag generator for Stable Diffusion. Translate the user prompt into English comma-separated tags describing the subject. Exclude quality tags like masterpiece. Only return the tags, no other text.'
+          }, {
+            role: 'user',
+            content: userPrompt.trim()
+          }]);
+          
+          if (translated) {
+            randomPrompt = `masterpiece, best quality, very aesthetic, absurdres, ${gender === 'female' ? '1girl' : '1boy'}, solo, ${translated}`;
           }
-        )
-        clearTimeout(timeout)
-
-        if (res.status === 503) {
-          // Model loading, wait and retry once
-          setGenStatus(`⏳ โมเดลกำลังโหลด รอสักครู่...`)
-          await new Promise(r => setTimeout(r, 8000))
-          const res2 = await fetch(
-            `https://api-inference.huggingface.co/models/${model}`,
-            { method: 'POST', headers, body: JSON.stringify({ inputs: prompt }) }
-          )
-          if (!res2.ok) throw new Error(`HTTP ${res2.status}`)
-          const blob2 = await res2.blob()
-          if (!blob2.type.startsWith('image/')) throw new Error('Not an image')
-          const url2 = URL.createObjectURL(blob2)
-          prevBlobRef.current = url2
-          setGeneratedUrl(url2)
-          success = true
-          break
+        } catch (e) {
+          console.error("Translation failed:", e);
+          randomPrompt = `masterpiece, best quality, very aesthetic, absurdres, ${gender === 'female' ? '1girl' : '1boy'}, solo, ${userPrompt.trim()}`;
         }
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-
-        const blob = await res.blob()
-        if (!blob.type.startsWith('image/')) throw new Error('Not image')
-
-        const blobUrl = URL.createObjectURL(blob)
-        prevBlobRef.current = blobUrl
-        setGeneratedUrl(blobUrl)
-        success = true
-        break
-      } catch (err) {
-        console.error(`Model ${model} failed:`, err.message)
-        setGenStatus(`⚠️ ลองโมเดลถัดไป...`)
       }
-    }
 
-    if (!success) {
-      setLoadError(true)
-    }
+      setGenStatus(`🔍 กำลังค้นหาโมเดลในเซิร์ฟเวอร์...`)
 
+      // 1. ดึงรายชื่อโมเดลทั้งหมด
+      const resModels = await fetch(`/sdapi/v1/sd-models`).catch(e => {
+        throw new Error("ต่อเชื่อมเซิร์ฟเวอร์ไม่ได้ (เช็ค URL ใน .env หรืออาจเป็นปัญหา CORS)");
+      });
+
+      if (!resModels.ok) throw new Error(`ไม่สามารถโหลด Model ได้ (Code: ${resModels.status})`);
+      const modelsData = await resModels.json()
+      
+      let selectedModel = null;
+      if (Array.isArray(modelsData) && modelsData.length > 0) {
+        // ล็อคเป้าใช้โมเดล Animagine XL แบบเจาะจง ถ้าไม่มีค่อยใช้ตัวแรก
+        const animagineModel = modelsData.find(m => m.title.toLowerCase().includes('animaginexl'));
+        selectedModel = animagineModel ? animagineModel.title : modelsData[0].title;
+        setGenStatus(`🔄 ล็อคโมเดล: ${selectedModel.split('.')[0].substring(0, 18)}...`)
+        
+        // 2. สั่งเปลี่ยน Model
+        await fetch(`/sdapi/v1/options`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sd_model_checkpoint: selectedModel })
+        }).catch(e => console.log('Model switch fail, continuing anyway.', e));
+      }
+
+      setGenStatus(`🎨 กำลังสเก็ตช์ภาพให้ ${friendName}...`)
+      
+      const isImg2Img = !!friendPhoto
+      const endpoint = isImg2Img ? `/sdapi/v1/img2img` : `/sdapi/v1/txt2img`
+
+      // 3. เจนภาพ
+      const resGen = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: randomPrompt,
+          negative_prompt: negativePrompt,
+          steps: 28,
+          width: 832,
+          height: 1152,
+          sampler_name: "Euler a",
+          cfg_scale: 7,
+          ...(isImg2Img && { 
+              "init_images": [friendPhoto.split(',')[1]],
+              "denoising_strength": 0.55 
+          })
+        })
+      })
+      
+      if (!resGen.ok) throw new Error(`เกิดข้อผิดพลาดตอนเจนภาพ (Code: ${resGen.status})`);
+      const data = await resGen.json()
+      
+      if (data?.images?.[0]) {
+          setGeneratedUrl(`data:image/png;base64,${data.images[0]}`)
+      } else {
+          throw new Error("ได้ข้อมูลภาพแต่ไร้ภาพ (ลองลดขนาดภาพหรือเช็ค VRAM)");
+      }
+    } catch (err) {
+      console.error("Vast API Error:", err)
+      setLoadError(`❌ ระบบติดขัด: ${err.message}`)
+    }
+    
     setGenStatus('')
     setIsGenerating(false)
   }
 
-  // Cleanup blob on unmount
   useEffect(() => {
     return () => { if (prevBlobRef.current) URL.revokeObjectURL(prevBlobRef.current) }
   }, [])
 
-  const handleRegenerate = () => {
-    setLoadError(false)
-    setGeneratedUrl(null)
-    setGenStatus('')
-    generateImage()
-  }
-
   const handleConfirm = () => {
     if (!generatedUrl || loadError) return
-    const char = selectedChar ? AI_CHARACTERS.find(c => c.id === selectedChar) : AI_CHARACTERS[0]
+    const charList = AI_CHARACTERS[gender] || AI_CHARACTERS.female
+    const char = selectedChar ? charList.find(c => c.id === selectedChar) : charList[0]
     onImageGenerated(generatedUrl, char)
   }
+
+  const activeCharacters = AI_CHARACTERS[gender] || AI_CHARACTERS.female
 
   return (
     <div className="generate-step">
       <div className="card generate-card">
         <div className="section-title">
-          <h2>🎨 ขั้นตอนที่ 2</h2>
-          <p>เลือกสไตล์รูปตลกๆ สำหรับ <strong style={{ color: 'var(--pink-bright)' }}>{friendName}</strong>!</p>
+          <h2>🎨 ขั้นตอนที่ 2: สร้างตัวตนใหม่ให้ {friendName}</h2>
+          <p>ระบบจะสุ่มสไตล์ภาพและ AI จะออกแบบให้เข้ากับแนว {gender === 'female' ? "สาวน้อยน่ารัก" : "หนุ่มมาดเท่"} อัตโนมัติ!</p>
         </div>
 
-        {/* Theme Selector */}
-        <div className="theme-section">
-          <label className="input-label">เลือกธีมรูปตลก 🎭</label>
-          <div className="theme-grid">
-            {FUNNY_THEMES.map(theme => (
-              <button
-                key={theme.id}
-                id={`theme-${theme.id}`}
-                className={`theme-card ${selectedTheme === theme.id ? 'selected' : ''}`}
-                onClick={() => { setSelectedTheme(theme.id); setGeneratedUrl(null); setLoadError(false) }}
-              >
-                <span className="theme-label">{theme.label}</span>
-              </button>
-            ))}
+        {!generatedUrl && !isGenerating && (
+          <div className="prompt-input-wrap" style={{marginBottom: '20px', width: '100%', textAlign: 'left'}}>
+            <label className="input-label" htmlFor="user-prompt" style={{display: 'block', marginBottom: '8px'}}>
+              พิมพ์บอก AI ว่าอยากได้แนวไหน (ภาษาไทยได้เลย!) ✍️
+            </label>
+            <textarea 
+              id="user-prompt"
+              className="input-field" 
+              rows="3" 
+              placeholder="เช่น ใส่ชุดนักเรียนญี่ปุ่น ถือไอศกรีม ยิ้มร่าเริง ฉากหลังเป็นทะเล..." 
+              value={userPrompt}
+              onChange={e => setUserPrompt(e.target.value)}
+              style={{resize: 'none'}}
+            />
+            <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'left'}}>
+              * หรือเว้นว่างไว้ให้ช่างภาพ AI ของเราสุ่มจัดให้ก็ได้นะ!
+            </p>
           </div>
-        </div>
+        )}
 
-        {/* Generate Button */}
-        <button
-          className="btn-primary gen-btn"
-          id="btn-generate"
-          onClick={generateImage}
-          disabled={!selectedTheme || isGenerating}
-        >
-          {isGenerating ? <><div className="spinner" style={{ width: 20, height: 20, margin: 0 }} /> กำลังเจน...</> : '✨ เจนรูปตลก!'}
-        </button>
+        {!generatedUrl && !isGenerating && (
+          <button 
+            className="btn-primary gen-btn" 
+            onClick={generateImage}
+            style={{ padding: '18px', fontSize: '1.2rem' }}
+          >
+            ✨ เริ่มแปลงร่างเลย!
+          </button>
+        )}
 
-        {/* Generated Image Loading */}
         {isGenerating && (
           <div className="gen-loading">
             <div className="spinner" />
-            <p>{genStatus || `⏳ กำลังเจนรูป ${friendName}...`}<br/><small>อาจใช้เวลา 10-20 วินาที</small></p>
-          </div>
-        )}
-
-        {/* Status during fetch (not fully loading) */}
-        {!isGenerating && genStatus && !generatedUrl && (
-          <div className="gen-loading">
-            <p>{genStatus}</p>
-          </div>
-        )}
-
-        {generatedUrl && !isGenerating && (
-          <div className="gen-result">
-            <div className="gen-image-wrap">
-              <img
-                src={generatedUrl}
-                alt="generated"
-                className="gen-image"
-              />
-              <div className="gen-image-glow" />
-            </div>
-            <p className="gen-caption">🎉 รูปของ {friendName} พร้อมแล้ว! ตลกมาก 😂</p>
-            <button className="btn-secondary" id="btn-regen" onClick={handleRegenerate}>
-              🔄 เจนใหม่อีกรอบ
-            </button>
+            <p style={{ marginTop: '10px', fontSize: '0.95rem' }}>{genStatus}</p>
           </div>
         )}
 
         {loadError && !isGenerating && (
-          <div className="gen-loading">
-            <p className="error-msg">❌ เจนรูปไม่ได้ กรุณาลองใหม่<br/><small>อาจเกิดจากเซิร์ฟเวอร์โหลดหนักในขณะนี้</small></p>
-            <button className="btn-secondary" id="btn-retry-gen" onClick={handleRegenerate}>🔄 ลองใหม่</button>
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <div className="error-msg">{loadError}</div>
+            <button className="btn-secondary" onClick={generateImage} style={{ marginTop: '12px' }}>
+              <span style={{ marginRight: '6px' }}>🔄</span> ลองใหม่
+            </button>
+            <p style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              หาเซิร์ฟเวอร์ Vast.ai ไม่เจอ: <br/>ตรวจสอบว่ายิงไปที่ `{vastUrl}` สำเร็จหรือไม่
+            </p>
           </div>
         )}
 
+        {generatedUrl && (
+          <div className="gen-result">
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--pink-bright)', marginBottom: '4px' }}>
+              แปลงโฉมเสร็จแล้ว! ✨
+            </h3>
+            <div className="gen-image-wrap">
+              <div className="gen-image-glow" />
+              <img src={generatedUrl} alt="Generated UI" className="gen-image" />
+            </div>
+            
+            <div className="char-selection" style={{ marginTop: '16px', width: '100%' }}>
+              <p className="input-label" style={{ textAlign: 'center' }}>เลือกนิสัย AI แชทของคุณ:</p>
+              <div className="char-grid">
+                {activeCharacters.map(c => (
+                  <div 
+                    key={c.id} 
+                    className={`char-card ${selectedChar === c.id ? 'selected' : ''}`}
+                    style={{ '--char-color': c.color }}
+                    onClick={() => setSelectedChar(c.id)}
+                  >
+                    <span className="char-emoji">{c.emoji}</span>
+                    <span className="char-name">{c.name}</span>
+                    <span className="char-desc">{c.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-        {/* Character Selector */}
-        {generatedUrl && !loadError && (
-          <div className="char-section">
-            <label className="input-label">เลือก AI ที่จะจีบ {friendName} 💘</label>
-            <div className="char-grid">
-              {AI_CHARACTERS.map(char => (
-                <button
-                  key={char.id}
-                  id={`char-${char.id}`}
-                  className={`char-card ${selectedChar === char.id ? 'selected' : ''}`}
-                  style={{ '--char-color': char.color }}
-                  onClick={() => setSelectedChar(char.id)}
-                >
-                  <span className="char-emoji">{char.emoji}</span>
-                  <span className="char-name">{char.name}</span>
-                  <span className="char-desc">{char.desc}</span>
-                </button>
-              ))}
+            <div className="gen-actions" style={{ width: '100%', marginTop: '16px' }}>
+              <button className="btn-secondary" onClick={() => setGeneratedUrl(null)}>
+                🔄 สุ่มใหม่
+              </button>
+              <button className="btn-primary" onClick={handleConfirm} disabled={!selectedChar}>
+                ลุยไปจีบกันเลย! 💘
+              </button>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Actions */}
-        <div className="gen-actions">
-          <button className="btn-secondary" id="btn-back-gen" onClick={onBack}>
-            ← กลับ
-          </button>
-          {generatedUrl && !loadError && selectedChar && (
-            <button className="btn-primary" id="btn-go-flirt" onClick={handleConfirm}>
-              💘 ไปจีบเลย!
-            </button>
-          )}
-        </div>
+      <div style={{ textAlign: 'center', marginTop: '24px' }}>
+        <button className="btn-secondary" onClick={onBack} disabled={isGenerating}>
+          ← กลับไปหน้าหลัก
+        </button>
       </div>
     </div>
   )

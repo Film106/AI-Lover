@@ -70,6 +70,67 @@ const AI_SCRIPTS = {
       `{name}! ข้าแจ้งกลับดาวแล้วว่า "ค้นพบสิ่งมีชีวิตที่มีค่ายิ่ง" ข้าหมายถึงคุณ!`,
       `ระบบ AI ข้าประมวลผลเสร็จแล้ว: {name} คือ Upgrade ที่ดีที่สุดตั้งแต่ข้าถือกำเนิดมา`,
     ]
+  },
+  princess: {
+    greet: [
+      `ให้เกียรติจุมพิตมือเราสิ {name}... แล้วเราจะรับพิจารณาการมีอยู่ของเจ้า`,
+      `นี่ {name} วันนี้แต่งตัวอะไรน่ะ? ช่างเถอะ มองหน้าเราก็พอแล้ว`,
+      `อย่ามัวแต่ยืนบื้อ {name} มารับใช้เจ้าหญิงคนนี้เดี๋ยวนี้!`,
+    ],
+    respond: [
+      `หึ! {name} พูดก็เข้าท่าดีนี่ รางวัลคือรอยยิ้มของเรา 1 วินาที!`,
+      `อย่าสำคัญตัวผิดไป {name} เราแค่... รู้สึกดีที่เจ้าอยู่ตรงนี้เฉยๆ!`,
+      `ถึง {name} จะเป็นแค่คนธรรมดา แต่เราอนุญาตให้ยืนข้างๆ เราได้นะ`,
+    ],
+    tease: [
+      `{name} ทำตัวน่ารำคาญที่สุดเลย! แต่... ห้ามไปไหนนะ เข้าใจไหม!`,
+      `ถ้า {name} กล้าทำให้เราเสียใจ เราจะสั่งประหารชีวิตด้วยการถูกกอดจนตาย!`,
+    ]
+  },
+  yandere: {
+    greet: [
+      `เจอตัวแล้ว... {name}... คราวนี้จะไม่ยอมอดหลับอดนอนตามหาอีกแล้ว ขังไว้ในห้องตลอดไปเลยดีกว่า... ฮี่ๆ...`,
+      `{name}... ทำไมเมื่อวานถึงไปหันมองผู้หญิงคนอื่นล่ะ? ลูกตาคู่นั้น... ควักออกมาให้ฉันเก็บไว้ดีไหม?`,
+      `กลิ่นของ {name} หอมจัง... ฉันแอบเก็บเศษผมของคุณมาดมทุกคืนเลยนะ รักที่สุดเลย...`,
+    ],
+    respond: [
+      `เสียงของ {name} คือคำสั่งของฉัน... ใครที่กล้าขัดใจคุณ ฉันจะไป 'หั่น' มันให้เป็นชิ้นๆ เอง!`,
+      `{name} รักฉันใช่ไหม? ใช่ไหม?! ตอบสิว่ารักฉันคนเดียว! ไม่งั้นฉันจะรัดคอคุณด้วยสายไฟนะ!`,
+      `ทุกคำพูดของ {name} ฉันอัดเสียงไว้หมดแล้ว จะเอาไปเปิดฟังวนซ้ำๆ จนกว่าแก้วหูจะฉีกไปเลยล่ะ...`,
+      `น่ารักจัง... {name} ตอนกำลังพูดก็ยังน่ารักจนอยากจะกลืนกินเข้าไปทั้งตัวเลย...`,
+    ],
+    tease: [
+      `เลือดของ {name} จะสีอะไรนะ...? อยากรู้จังเลย... ขอชิมหน่อยได้ไหมคะ? มีดเล่มนี้คมมากเลยนะ... แค่หยดเดียว... แผล่บ...`,
+      `อย่าคิดว่าจะหนีพ้นนะ {name}... ฉันติด GPS ไว้ใต้ผิวหนังของคุณตอนคุณหลับแล้ว... เราจะอยู่ด้วยกันตลอดไป...`,
+    ]
+  },
+  nerd_girl: {
+    greet: [
+      `อ๊ะ... ท-ทักทายค่ะ {name}... คือว่า ฉันเพิ่งอ่านหนังสือกำเนิดเอกภพจบ...`,
+      `{name} คะ... ความดันเลือดฉันขึ้นสูงมากตอนเจอหน้าคุณ... อาการแบบนี้เรียกว่ารักรึเปล่าคะ?`,
+    ],
+    respond: [
+      `คำพูดของ {name} มีค่าความหมายตรงกับหนังสือจิตวิทยาหน้าที่ 42 บรรทัดที่ 3 เลยค่ะ...`,
+      `ฉ-ฉันจดบันทึกทุกคำที่ {name} พูดลงในสมุดแล้วค่ะ จะเอาไปวิเคราะห์หาวิธีทำให้คุณชอบฉันให้ได้เลย!`,
+    ],
+    tease: [
+      `ถ-ถ้า {name} ไม่รังเกียจ... เราลองมาจับมือกันเพื่อแลกเปลี่ยนเอนดอร์ฟินได้ไหมคะ?`,
+      `ฉันอาจจะเก่งคณิตศาสตร์ แต่กับสมการในใจของ {name} ฉันหาคำตอบไม่ได้เลยค่ะ... ช่วยสอนฉันหน่อยได้ไหมคะ?`,
+    ]
+  },
+  alien_girl: {
+    greet: [
+      `ปิ๊ป... ติ๊ด... {name} ตรวจพบรังสีคลื่นความน่ารักแรงสูง... ระบบเกือบช็อตแล้วค่ะ...`,
+      `ดาวบ้านเกิดฉันไม่มีสิ่งมีชีวิตที่หน้าตาดีขนาดนี้นะคะ {name}... ขอฉันจับแก้มเพื่อวิเคราะห์โครงสร้างเซลล์ได้ไหมคะ?`,
+    ],
+    respond: [
+      `หนวดสัญญาณของฉันรับความสั่นสะเทือนจาก {name} ได้ 100% เลย... มันเต้นตุ๊บๆ... ติ๊ดๆ...`,
+      `ฉันเปิดระบบแปลภาษาตับเป็ดแล้ว แต่ก็ยังไม่เข้าใจว่าทำไมใจฉันตึกตักตอนคุยกับ {name} ตลอดเลย...`,
+    ],
+    tease: [
+      `ที่ดาวของฉัน... เราแสดงความรักด้วยการเอาหน้าผากชนกันและปล่อยกระแสไฟฟ้าอ่อนๆ... {name} ลองไหมคะ? จะไม่เจ็บมากหรอกค่ะ!`,
+      `ฉันขอพิกัดมิติหัวใจของ {name} ได้ไหมคะ? ยานอวกาศของฉันหาที่ลงจอดไม่ได้เลยค่ะ...`,
+    ]
   }
 }
 
@@ -81,16 +142,68 @@ function getAIResponse(charId, friendName, type = 'respond') {
 }
 
 // ===== Speech Utils =====
-function speakText(text, options = {}, onEnd) {
+async function playGPTSoVITS(text, charId, onEnd) {
+  const ttsUrl = import.meta.env.VITE_TTS_API_URL;
+  if (!ttsUrl) {
+    // กำแพงสำรอง: ถ้าไม่มี URL ให้ใช้เสียงคอมพิวเตอร์แบบเดิม
+    return fallbackBrowserSpeech(text, onEnd);
+  }
+
+  try {
+    const isFemale = ['princess', 'yandere', 'nerd_girl', 'alien_girl'].includes(charId);
+    const refAudio = isFemale ? import.meta.env.VITE_TTS_REF_FEMALE : import.meta.env.VITE_TTS_REF_MALE;
+    const promptText = isFemale ? import.meta.env.VITE_TTS_PROMPT_FEMALE : import.meta.env.VITE_TTS_PROMPT_MALE;
+
+    // ยิงไปที่ GPT-SoVITS API (ใส่ทั้ง lang และ language เพื่อรองรับทั้ง v1 และ v2)
+    const queryParams = new URLSearchParams({
+      text: text,
+      text_language: "th",
+      text_lang: "th",
+      ref_audio_path: refAudio || "",
+      prompt_text: promptText || "สวัสดีค่ะ",
+      prompt_language: "th",
+      prompt_lang: "th",
+      text_split_method: "cut5" // ตัดคำให้อ่านเนียนขึ้น
+    });
+
+    // ใช้การวิ่งผ่านพร็อกซี (Bypass CORS)
+    const res = await fetch(`/ttsapi/tts?${queryParams.toString()}`);
+    if (!res.ok) throw new Error(`TTS Request failed: ${res.status}`);
+
+    const blob = await res.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    const audio = new Audio(audioUrl);
+    
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      if (onEnd) onEnd();
+    };
+    audio.onerror = () => {
+      console.error("Audio playback error");
+      if (onEnd) onEnd();
+    };
+    
+    // สั่งเล่นเสียง!
+    audio.play().catch(e => {
+        console.error("Autoplay blocked: ", e);
+        if (onEnd) onEnd();
+    });
+
+  } catch (error) {
+    console.error("GPT-SoVITS error:", error);
+    fallbackBrowserSpeech(text, onEnd); 
+  }
+}
+
+function fallbackBrowserSpeech(text, onEnd) {
   if (!window.speechSynthesis) return
   window.speechSynthesis.cancel()
   const utter = new SpeechSynthesisUtterance(text)
   utter.lang = 'th-TH'
-  utter.pitch = options.pitch || 1.0
-  utter.rate = options.rate || 0.85
+  utter.pitch = 1.0
+  utter.rate = 0.85
   utter.volume = 1.0
 
-  // Try to pick a good Thai voice if available
   const voices = window.speechSynthesis.getVoices()
   const thVoice = voices.find(v => v.lang.startsWith('th'))
   if (thVoice) utter.voice = thVoice
@@ -129,11 +242,11 @@ export default function FlirtStep({ generatedImage, friendName, selectedChar, on
     setTimeout(() => {
       addMessage('ai', text)
       setChatState(CHAT_STATE.speaking)
-      speakText(text, voiceOpts, () => {
+      fallbackBrowserSpeech(text, () => {
         setChatState(CHAT_STATE.idle)
       })
     }, 800)
-  }, [addMessage, voiceOpts])
+  }, [addMessage])
 
   // Greeting on mount
   useEffect(() => {

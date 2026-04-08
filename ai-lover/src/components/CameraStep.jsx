@@ -19,9 +19,6 @@ export default function CameraStep({ onPhotoTaken }) {
         audio: false
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
       setMode('camera')
     } catch (err) {
       setCameraError('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้กล้อง')
@@ -80,6 +77,12 @@ export default function CameraStep({ onPhotoTaken }) {
   useEffect(() => {
     return () => stopCamera()
   }, [stopCamera])
+
+  useEffect(() => {
+    if (mode === 'camera' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current
+    }
+  }, [mode])
 
   // ===== INTRO =====
   if (mode === 'intro') {
